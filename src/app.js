@@ -10,6 +10,20 @@ app.use(cors());
 
 const repositories = [];
 
+function likeRequest(request, response, next) {
+  const { id } = request.params;
+  const repositoryIndex = repositories.findIndex(
+    (repository) => repository.id === id,
+  );
+
+  if (repositoryIndex < 0) {
+    return response.status(400).send();
+  }
+  request.body.likes = repositories[repositoryIndex].likes;
+
+  return next();
+}
+
 app.get('/repositories', (request, response) => {
   return response.json(repositories);
 });
@@ -28,7 +42,7 @@ app.post('/repositories', (request, response) => {
 });
 
 //UPDATE
-app.put('/repositories/:id', (request, response) => {
+app.put('/repositories/:id', likeRequest, (request, response) => {
   const { id } = request.params;
   const { title, url, techs, likes } = request.body; //Valores vindos da requisição
   const repositoryIndex = repositories.findIndex(
@@ -39,9 +53,8 @@ app.put('/repositories/:id', (request, response) => {
     return response.status(400).send();
   }
 
-  likes = repositories[repositoryIndex].likes;
-
   const repository = {
+    id,
     title,
     url,
     techs,
@@ -60,7 +73,7 @@ app.delete('/repositories/:id', (request, response) => {
   if (repositoryIndex < 0) {
     return response.status(400).send();
   }
-  repositories.splice(repositories, 1);
+  repositories.splice(repositoryIndex, 1);
   return response.status(204).send();
 });
 
